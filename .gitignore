@@ -8,3 +8,4 @@ output/
 node_modules/
 .ruff_cache/
 social-preview/
+/.pr-deploy-gate
