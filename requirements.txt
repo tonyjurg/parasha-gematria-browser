@@ -526,9 +526,9 @@ stack-data==0.6.3 \
     --hash=sha256:836a778de4fec4dcd1dcd89ed8abff8a221f58308462e1c4aa2a3cf30148f0b9 \
     --hash=sha256:d5558e0c25a4cb0853cddad3d77da9891a08cb85dd9f9f91b9f8cd66e511e695
     # via ipython
-text-fabric==13.1.0 \
-    --hash=sha256:2b57fec0bf8c7dace8ef23faeecdd15b584b2d7826a366b8640034cd2ccbcaad \
-    --hash=sha256:3af460b2fb9e6ad7f91a93f7aac5f83c79a0cdd797ac1aa73a98b72481eadc5d
+text-fabric==13.1.1 \
+    --hash=sha256:90ed48011cab4f13decee5830e322c9ba884d90fc55cddc1473e3901a1be177b \
+    --hash=sha256:ecde05c2d066757883de78207dcca58fd7b7b627870fe933957c241d8344caaa
     # via -r requirements.in
 traitlets==5.16.1 \
     --hash=sha256:ed900c2b631aa3a112811139fa97b8d2c3bad5e989656bba4b7e52c7852c18c1 \
