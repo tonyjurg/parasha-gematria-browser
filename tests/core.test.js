@@ -1,9 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {buildModel,findMatches,findRepeated,unitsFor} from '../site/core.js';
+import {buildModel,findMatches,findRepeated,unitsFor,shebanqUrl,reference} from '../site/core.js';
 import {expandDocument} from '../site/data-codec.js';
 const document = expandDocument(JSON.parse(readFileSync(new URL('../site/data/01.json',import.meta.url))));
+
+test('SHEBANQ links use Latin book names while references keep English names',()=>{
+  for (const [book, expected] of [['Genesis','Genesis'], ['Exodus','Exodus'],
+    ['Leviticus','Leviticus'], ['Numbers','Numeri'], ['Deuteronomy','Deuteronomium']]) {
+    const ref = [book, 3, 12];
+    const url = new URL(shebanqUrl(ref));
+    assert.equal(url.origin, 'https://shebanq.ancient-data.org');
+    assert.equal(url.pathname, '/hebrew/text');
+    assert.deepEqual(Object.fromEntries(url.searchParams), {
+      version:'2021', book:expected, chapter:'3', verse:'12', mr:'m', tr:'hb', tp:'txt_p'
+    });
+    assert.deepEqual(ref, [book, 3, 12]);
+    assert.equal(reference(ref), `${book} 3:12`);
+  }
+});
 
 test('Genesis 1:1 contains seven whole words with known standard values',()=>{
   const model=buildModel(document);
