@@ -66,6 +66,9 @@ export function findRepeated(model, kind = 'verse', differentOnly = false) {
 export function reference(ref) { return `${ref[0]} ${ref[1]}:${ref[2]}`; }
 
 export function shebanqUrl([book, chapter, verse]) {
+  // SHEBANQ uses Latin names for these two books.
+  if (book === 'Numbers') book = 'Numeri';
+  if (book === 'Deuteronomy') book = 'Deuteronomium';
   const params = new URLSearchParams({version:'2021', book, chapter:String(chapter), verse:String(verse), mr:'m', tr:'hb', tp:'txt_p'});
   return `https://shebanq.ancient-data.org/hebrew/text?${params}`;
 }
