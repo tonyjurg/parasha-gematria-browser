@@ -3,6 +3,7 @@ import re
 import tomllib
 import pytest
 import yaml
+from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -109,3 +110,32 @@ def test_quality_workflow_runs_the_full_source_independent_python_suite():
     commands = [step['run'] for step in job['steps'] if 'run' in step]
     assert 'python -m pytest -q' in commands
     assert 'python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt' in commands
+
+
+@pytest.mark.parametrize('filename', ['requirements.txt', 'requirements-dev.txt'])
+@pytest.mark.parametrize(('python_version', 'platform', 'required'), [
+    ('3.11', 'linux', {'typing-extensions', 'pexpect', 'ptyprocess'}),
+    ('3.13', 'linux', {'pexpect', 'ptyprocess'}),
+    ('3.13', 'win32', {'colorama'}),
+])
+def test_locks_include_hashed_dependencies_for_each_ci_environment(filename, python_version, platform, required):
+    # A platform-specific recompile can retain the universal command header while
+    # dropping dependencies needed by other CI environments.
+    lock = (ROOT / filename).read_text(encoding='utf-8').replace('\\\n', '')
+    active = set()
+    for line in lock.splitlines():
+        if not line.strip() or line.lstrip().startswith('#'):
+            continue
+        requirement_text, *hashes = line.split('--hash=sha256:')
+        requirement = Requirement(requirement_text.strip())
+        if requirement.marker and not requirement.marker.evaluate({
+            'python_version': python_version,
+            'python_full_version': f'{python_version}.0',
+            'sys_platform': platform,
+        }):
+            continue
+        assert hashes, f'{requirement.name} is missing distribution hashes'
+        assert len(requirement.specifier) == 1
+        assert next(iter(requirement.specifier)).operator == '=='
+        active.add(requirement.name)
+    assert required <= active
