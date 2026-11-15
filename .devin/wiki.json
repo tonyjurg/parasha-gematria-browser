@@ -1,0 +1,269 @@
+{
+  "repo_notes": [
+    {
+      "content": "Parasha Gematria Browser is a two-part project: (1) an offline Python export pipeline that turns Text-Fabric data (ETCBC/bhsa, gematria_TF, BHSaddons) into 54 static JSON files, one per Torah portion (parasha); (2) a zero-dependency static browser app in site/ (plain HTML + ES modules, no framework, no bundler, no runtime backend) that loads those JSON files and lets users read a parasha and search by gematria value."
+    },
+    {
+      "content": "Audience: Digital Humanities and biblical-studies researchers, Hebrew readers, and developers who need to reproduce or extend the dataset. Explain both the scholarly meaning (parashot, gematria, ketiv/qere) and the engineering (schemas, codec, CI) of each feature. Prefer precision over marketing language."
+    },
+    {
+      "content": "Core architectural principle: reproducibility and traceable evidence chains. Every deployed value must be traceable to a pinned source. source-lock.json pins repositories, commits, versions and SHA-256 checksums of every .tf feature file; the exporter verifies it and raises ValueError on any mismatch or missing file. Highlight this wherever data provenance is discussed."
+    },
+    {
+      "content": "Key invariant: every Torah word belongs to exactly one parasha (no gaps, no overlaps). The exporter validates this partition and tests/test_partition.py protects it. When a structural unit (phrase, clause, sentence) crosses a parasha boundary it is clipped: only the words inside the current parasha are exported and the unit is flagged as clipped."
+    },
+    {
+      "content": "Gematria is NOT reimplemented in application logic. Values come from the gematria_TF package. Five methods: hechrechi, gadol, sidduri, katan, katan_mispari. Only consonants count; vowels and cantillation marks are displayed in the UI but excluded from computation. Use these exact identifiers when referring to methods."
+    },
+    {
+      "content": "Text variants: two readings (ketiv = as written, qere = as read) and several representations (lexeme, word_ketiv, word_qere and related forms). Three word granularities in the UI: whole word, word part (prefixes/suffixes separated), and dictionary form (lexeme). Full-form values repeat across constituent BHSA word slots and are deduplicated by the browser model during matching."
+    },
+    {
+      "content": "Data format: exporter builds Schema 1 (expanded documents), which is compacted to Schema 2 (deduplicated string, form and value tables). compact_document / expand_document in Python and the JS data-codec must stay in parity; tests protect this. The browser expands Schema 2 on demand. Final artifacts are site/data/NN.json plus a catalogue.js that holds checksums and lets the browser discover portions."
+    },
+    {
+      "content": "Key files and where to look: export_parashot.py (export, partition, validation), create_parasha_json.ipynb (interactive export/inspection), source-lock.json (pinned sources), site/index.html + site/info.html (page shells), site/core.js (model and search), site/app.js (UI wiring), site/style.css / gloss.css / info.css (styling), scripts/generate_sitemap.py, tests/ (pytest), JS tests run with node --test, docs/validation.md, docs/runner-compatibility.md, .github/workflows/."
+    },
+    {
+      "content": "Browser security posture: strict Content-Security-Policy in the HTML shells, escaped rendering of data, noscript fallback, no third-party runtime dependencies. tests security.test.js asserts CSP and escaping expectations. Mention these when describing the frontend."
+    },
+    {
+      "content": "CI/CD posture: GitHub Actions with least-privilege permissions (contents: read), actions pinned to full commit SHAs, hash-checked Python installs (--require-hashes, pip check), ruff formatting, pytest on Python 3.11 and 3.13 (Linux) and 3.13 (Windows), Node 24 for JS lint/tests (npm ci --ignore-scripts). Deployment to GitHub Pages is gated: quality must pass on main before build and deploy. A main.json ruleset enforces required checks."
+    },
+    {
+      "content": "Use Mermaid diagrams for: the source-to-JSON pipeline, the Schema 1 to Schema 2 codec transformation, parasha partition and clipping, browser data-loading flow (catalogue to fetch to expand to buildModel to render), and the CI workflow chain. Always name real files, functions and constants (e.g. fetch_bhsa, load_sources, METHODS, READINGS, REPRESENTATIONS, buildModel, findMatches) so diagrams map to code."
+    },
+    {
+      "content": "Author context: tonyjurg is a Biblical Studies and Digital Humanities researcher (VU Amsterdam) working with Text-Fabric. Related repos: BHSaddons (parasha boundaries and names for BHSA) and the older Parashot repo. Link to these by name when explaining where parasha boundary data comes from. Do not invent contributors, release history or usage statistics."
+    },
+    {
+      "content": "Keep terminology consistent across pages: 'parasha' (singular) and 'parashot' (plural); 'Schema 1' and 'Schema 2'; 'clipped unit'; 'catalogue' (British spelling, as in catalogue.js); 'pinned actions'. Refer to the Glossary page for definitions instead of redefining terms on every page."
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "What the Parasha Gematria Browser is: a static, reproducible reader and gematria search tool for the 54 Torah portions, built from pinned Text-Fabric sources. Describe the two subsystems (Python export pipeline and static JS site), a high-level architecture diagram, the repo layout, the live GitHub Pages site, and licensing. Link to every child page and to the Glossary.",
+      "page_notes": [
+        {
+          "content": "Open with one paragraph a newcomer can understand: input is the Hebrew Bible text with linguistic annotation, output is a fast browser reader where you can search words and phrases by gematria value. Then show the end-to-end flow: ETCBC/bhsa + gematria_TF + BHSaddons -> export_parashot.py -> Schema 1 -> compaction -> site/data/NN.json + catalogue.js -> browser (core.js, app.js). Include a repo directory tree with one-line descriptions."
+        }
+      ]
+    },
+    {
+      "title": "Getting Started and Local Development",
+      "purpose": "Step-by-step setup: serving site/ locally with python -m http.server, running lint and tests (npm scripts, node --test, pytest, ruff), compiling pinned Python dependencies with uv, and the repo tooling configuration files. Include copy-paste commands and expected results.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Separate three workflows: (a) just view the site (no install, only a static server), (b) run the quality checks (npm ci --ignore-scripts, npm scripts, pip install from hashed requirements-dev.txt, ruff, pytest), (c) regenerate data (needs Text-Fabric and network access to fetch pinned BHSA features). State clearly that regenerating data is optional because the 54 JSON files are committed. Mention why a static server is needed (ES modules and fetch do not work from file://)."
+        }
+      ]
+    },
+    {
+      "title": "Domain Concepts: Parashot and Gematria",
+      "purpose": "Explain, for non-specialists, the 54 weekly Torah portions, the BHSA structural nodes (word, phrase, clause, sentence, verse) and how parasha boundaries come from BHSaddons, the five gematria methods, ketiv/qere, and whole word vs word part vs dictionary form. Map each concept to the code entity that implements it.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": "Use a table for the five gematria methods (hechrechi, gadol, sidduri, katan, katan_mispari) with a short definition and the constant name used in export_parashot.py. Explain that only consonants are computed. Use a 'natural language concept -> code entity' table for parasha, clipped unit, reading, representation and granularity. Include one worked example (a Hebrew word with its value under at least two methods) only if it can be verified from the repo; otherwise describe the idea without numbers."
+        }
+      ]
+    },
+    {
+      "title": "Data Pipeline",
+      "purpose": "Overview of how pinned BHSA, gematria_TF and BHSaddons sources become the 54 deployed JSON files. Provide the pipeline diagram, the guarantees it gives (reproducibility, exactly-one-parasha partition, checksum verification) and links to the export, compaction, artifact and validation child pages.",
+      "page_notes": [
+        {
+          "content": "Frame the pipeline as stages with inputs, outputs and failure modes: 1) verify source-lock.json, 2) load features via Text-Fabric, 3) build Schema 1 documents, 4) partition words into parashot and clip units, 5) compact to Schema 2, 6) write site/data/NN.json and catalogue.js, 7) validate. For each stage name the function or file responsible and what error is raised when it fails."
+        }
+      ]
+    },
+    {
+      "title": "Export from Text-Fabric (export_parashot.py)",
+      "purpose": "Detailed walkthrough of export_parashot.py: source pinning and source-lock.json verification, fetch_bhsa, load_sources and the set of required features, constants METHODS / READINGS / REPRESENTATIONS, building Schema 1 documents, partitioning words into parashot, clipping structural units, and the validation checks that raise ValueError.",
+      "parent": "Data Pipeline",
+      "page_notes": [
+        {
+          "content": "Document function by function with file and line references. Explain how SHA-256 checks protect reproducibility, why system nodes (otype, oslots, otext) are excluded from the feature set, and how partition validation guarantees every Torah word is in exactly one parasha. Cross-reference tests/test_partition.py and tests for the exporter. Include a sequence diagram of an export run."
+        }
+      ]
+    },
+    {
+      "title": "Schema 1 / Schema 2 and the Codec",
+      "purpose": "Specify the compact storage format: Schema 1 (expanded) versus Schema 2 (string table, form table, value arrays), compact_document and expand_document in Python, the JS data-codec, why parity matters, and the compaction report. Show before/after examples of a small document.",
+      "parent": "Data Pipeline",
+      "page_notes": [
+        {
+          "content": "Explain the motivation (smaller payloads for static hosting, faster load) and the trade-off (expansion work moves to the browser). Provide a field-by-field table of both schemas and a diagram of the transformation. Describe how Python and JS codecs are kept in lockstep by tests and what the compaction report measures. Be explicit about round-trip guarantees (expand(compact(x)) equals x) if tests assert them."
+        }
+      ]
+    },
+    {
+      "title": "Dataset Artifacts and Catalogue",
+      "purpose": "Describe the 54 site/data/NN.json payloads (naming, numbering, ordering across the five books), catalogue.js with per-file checksums, how the browser discovers and loads a portion, and how integrity is checked. Explain how to add or regenerate a dataset file.",
+      "parent": "Data Pipeline",
+      "page_notes": [
+        {
+          "content": "Include a table of the catalogue entry fields. Explain the relationship between the file number NN, the parasha name and its book. Make clear which files are generated (never hand-edit) and which command regenerates them. Link to the validation page for the checks that guard them."
+        }
+      ]
+    },
+    {
+      "title": "Notebook Workflow and Dataset Validation",
+      "purpose": "Explain create_parasha_json.ipynb (interactive export and inspection steps), the validation routines, and the checks listed in docs/validation.md. Describe how a researcher audits a dataset and how notebook correctness is itself tested.",
+      "parent": "Data Pipeline",
+      "page_notes": [
+        {
+          "content": "Present the notebook as a guided, auditable version of the CLI export: list its sections in order and what each shows. Then list each validation check from docs/validation.md with what invariant it protects and where it is implemented. Mention the notebook test module in tests/ and what it verifies (for example that the notebook stays in sync with the exporter)."
+        }
+      ]
+    },
+    {
+      "title": "Browser Application",
+      "purpose": "Overview of the zero-dependency static frontend in site/: index.html and info.html shells, the ES modules (core.js, app.js, data codec), CSS files, and how data flows from catalogue to rendered verses. Include a component diagram and links to child pages.",
+      "page_notes": [
+        {
+          "content": "Emphasise design choices: no framework, no build step, no runtime dependencies, strict CSP, works on any static host. Show the module dependency graph (app.js -> core.js and codec) and the runtime flow: user picks parasha, app.js loads JSON, codec expands, core.js builds the model, search runs, DOM renders."
+        }
+      ]
+    },
+    {
+      "title": "Page Shells and UI Controls",
+      "purpose": "Document index.html DOM structure and control selectors (parasha, method, reading, granularity, representation, search inputs), reading and search panels, the Content-Security-Policy, the noscript fallback, and the info.html user guide.",
+      "parent": "Browser Application",
+      "page_notes": [
+        {
+          "content": "Provide a table mapping each UI control (by id or selector) to the state field it drives in app.js. Explain the CSP directives and why each is set. Note accessibility and RTL considerations if present in the markup. Link to the Styling page for presentation details."
+        }
+      ]
+    },
+    {
+      "title": "Search and Model Core (core.js)",
+      "purpose": "Explain core.js: buildModel token grouping, unitsFor, findMatches, findRepeated, structureRuns, parseSearchValue, and SHEBANQ link generation. Define the search semantics (what counts as a match, how overlapping BHSA slots are deduplicated, how clipped units behave) with examples.",
+      "parent": "Browser Application",
+      "page_notes": [
+        {
+          "content": "This is the most logic-dense frontend page. Describe each exported function with inputs, outputs and edge cases, then tie each to the tests in site.test.js that pin its behaviour. Explain tokens vs runs vs units in plain terms and link to the Glossary. Include a diagram of how words become tokens, then units, then matches."
+        }
+      ]
+    },
+    {
+      "title": "Application Wiring (app.js)",
+      "purpose": "Describe app.js: loading and expanding portion data in the browser, deriving state from the dropdowns and controls, rendering verses, glosses and overlays, and error and retry handling. Show the event-to-render flow.",
+      "parent": "Browser Application",
+      "page_notes": [
+        {
+          "content": "Document the state object, the render pipeline and every user-visible failure path (network error, checksum mismatch, malformed data) with the message shown and the retry behaviour. Explain how untrusted data is escaped before insertion into the DOM, referencing security.test.js."
+        }
+      ]
+    },
+    {
+      "title": "Styling and Assets",
+      "purpose": "Cover style.css, gloss.css and info.css conventions, right-to-left Hebrew rendering (fonts, direction, vowel and cantillation display), responsive layout, and the logo and image assets.",
+      "parent": "Browser Application",
+      "page_notes": [
+        {
+          "content": "Keep this page short and practical: what each stylesheet owns, naming conventions, how RTL text is handled alongside LTR UI chrome, and where assets live and are referenced. Avoid listing every CSS rule."
+        }
+      ]
+    },
+    {
+      "title": "CI/CD and Repository Governance",
+      "purpose": "Overview of the GitHub Actions workflows, supply-chain protections (least privilege, pinned action SHAs, hashed installs), branch protection and dependency policy, with a diagram of the chain from pull request checks to GitHub Pages deployment. Links to child pages.",
+      "page_notes": [
+        {
+          "content": "Present one diagram of all workflows (quality.yml, pages.yml, sitemap.yml, ubuntu-26.yml) and how they relate (pages.yml reuses quality.yml). Summarise the security model in a short list, then defer detail to the children."
+        }
+      ]
+    },
+    {
+      "title": "Quality Workflow",
+      "purpose": "Detail quality.yml: the JavaScript job (Node 24, npm ci --ignore-scripts, lint and node --test), the Python matrix (3.11 and 3.13 on ubuntu-latest, 3.13 on windows-latest), hash-checked installs from requirements-dev.txt, pip check, ruff format check, pytest, and permissions.",
+      "parent": "CI/CD and Repository Governance",
+      "page_notes": [
+        {
+          "content": "Include the job matrix as a table and the exact commands run so a contributor can reproduce CI locally. Explain why installs use --require-hashes and why actions are pinned to SHAs."
+        }
+      ]
+    },
+    {
+      "title": "Pages Deployment and Sitemap",
+      "purpose": "Explain pages.yml (quality gate on main, then build, then deploy with pages: write and id-token: write), sitemap.yml (independent generation with optional base_url and default SITE_URL), scripts/generate_sitemap.py behaviour and its unit tests.",
+      "parent": "CI/CD and Repository Governance",
+      "page_notes": [
+        {
+          "content": "Show the three-job deploy chain (quality -> build -> deploy) as a diagram, including the refs/heads/main condition. Describe what generate_sitemap.py reads and writes (site/sitemap.xml), how the base URL is resolved, and what test_sitemap.py asserts. Note that sitemap.yml uploads the sitemap as an artifact."
+        }
+      ]
+    },
+    {
+      "title": "Runner Compatibility (Ubuntu 26)",
+      "purpose": "Describe the ubuntu-26.yml parity workflow, the drift-prevention test that keeps it aligned with the main quality workflow, and docs/runner-compatibility.md. Explain why forward-compatibility testing on a newer runner image is done.",
+      "parent": "CI/CD and Repository Governance",
+      "page_notes": [
+        {
+          "content": "Explain what is intentionally identical and what differs between ubuntu-26.yml and quality.yml, and how the drift test detects divergence. Keep it concise."
+        }
+      ]
+    },
+    {
+      "title": "Branch Protection and Dependency Automation",
+      "purpose": "Cover the main.json ruleset and required status checks, Dependabot schedules, pinned requirements lock files (generated with uv), and SECURITY.md vulnerability reporting policy.",
+      "parent": "CI/CD and Repository Governance",
+      "page_notes": [
+        {
+          "content": "List required checks by exact workflow/job name. Explain the dependency update loop: Dependabot opens PRs, hashed lock files are regenerated, quality CI validates. Describe which tests verify the ruleset file itself."
+        }
+      ]
+    },
+    {
+      "title": "Issue Templates and Contribution Intake",
+      "purpose": "Describe the bug report, feature request and data correction issue templates and config.yml routing, and how contributors should report problems with the text data versus the software.",
+      "parent": "CI/CD and Repository Governance",
+      "page_notes": [
+        {
+          "content": "Explain the distinction between a data correction (upstream BHSA or BHSaddons content versus this repo's export) and a software bug, and what information each template asks for so maintainers can triage."
+        }
+      ]
+    },
+    {
+      "title": "Testing Strategy",
+      "purpose": "Overview of the dual Python (pytest) and JavaScript (node --test) suites and the invariants they protect: codec parity, partition correctness, source pinning, search semantics, security, workflows and rulesets. Include a table of invariant to test module.",
+      "page_notes": [
+        {
+          "content": "Organise by invariant rather than by file: data integrity, format parity, search correctness, security, CI configuration. For each, name the test module(s) and what regression it would catch. Note that several tests validate configuration files (workflows, rulesets) as code."
+        }
+      ]
+    },
+    {
+      "title": "Python Test Suite",
+      "purpose": "Describe the pytest modules (codec, export, partition, compaction, validation, notebook, workflows, rulesets), shared fixtures, how to run a single module, and what each module guarantees.",
+      "parent": "Testing Strategy",
+      "page_notes": [
+        {
+          "content": "One short section per module with its purpose and key assertions. Document shared fixtures in conftest and how tests avoid needing the full BHSA download (for example small synthetic data), if that is how they work."
+        }
+      ]
+    },
+    {
+      "title": "JavaScript Tests and Security Checks",
+      "purpose": "Describe the node --test suites: site.test.js (search semantics of core.js) and security.test.js (CSP and escaping expectations), how to run them, and the behaviours they lock in.",
+      "parent": "Testing Strategy",
+      "page_notes": [
+        {
+          "content": "List concrete search cases covered (matching across granularities, repeated values, clipped units) and the security assertions (required CSP directives, escaped output). Explain how to add a new test case."
+        }
+      ]
+    },
+    {
+      "title": "Glossary",
+      "purpose": "Definitions of domain and codebase terms with code pointers: parasha, BHSA, Text-Fabric, BHSaddons, gematria methods, ketiv/qere, whole word / word part / dictionary form, Schema 1 / Schema 2, codec, catalogue, clipped unit, token, run, source lock, pinned actions, uv, ruleset.",
+      "page_notes": [
+        {
+          "content": "Alphabetical table: term, one-sentence definition, and where it appears in the code or docs (file and symbol). Include Hebrew names for the five gematria methods where helpful. Link each term back to the page that explains it in depth."
+        }
+      ]
+    }
+  ]
+}
