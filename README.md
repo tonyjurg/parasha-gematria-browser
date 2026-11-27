@@ -47,16 +47,15 @@ BHSA TF files are downloaded freshly on every run from the pinned revision of
 [ETCBC/bhsa](https://github.com/ETCBC/bhsa). Every downloaded file is verified
 against `source-lock.json` before Text-Fabric loads it. Temporary downloaded
 files and their Text-Fabric compiled data are removed when the loaded API is
-released or the process exits; no existing
-BHSA cache is used. An internet connection is required for regeneration.
+released or the process exits; no existing BHSA cache is used. An internet connection is required for regeneration.
 
-The other source locations are sibling repositories:
+The other source locations are:
 
 | Source | Location |
 |---|---|
-| BHSA 2021 | Fresh download from the pinned ETCBC/bhsa commit |
-| Generated gematria_TF 0.2.0 | `../gematria_TF/tf/2021` |
-| BHSaddons | `../BHSaddons/tf/2021` |
+| BHSA 2021 | Fresh download from the pinned [ETCBC/bhsa](https://github.com/ETCBC/bhsa) commit |
+| Generated gematria_TF 0.2.0 | [`github.com/tonyjurg/gematria_TF/tf/2021`](https://github.com/tonyjurg/gematria_TF/tf/2021) |
+| BHSaddons | [`github.com/tonyjurg/BHSaddons/tf/2021`](https://github.com/tonyjurg/BHSaddons/tf/2021) |
 
 Override the local repositories with `--gematria` and `--addons`. A local `--bhsa` override is not supported. The exact revisions and canonical LF checksums are pinned in [source-lock.json](source-lock.json). Files that differ are rejected. The source gematria repository is private; an authorized checkout is required for regeneration. The already exported static site does not require access to that repository.
 
