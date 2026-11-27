@@ -2,13 +2,15 @@
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)  [![Checks on main](https://img.shields.io/github/actions/workflow/status/tonyjurg/parasha-gematria-browser/pages.yml?branch=main&label=checks&logo=github)](https://github.com/tonyjurg/parasha-gematria-browser/actions/workflows/pages.yml?query=branch%3Amain)  [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](site/) [![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](export_parashot.py) [![Online Tool](https://img.shields.io/badge/online%20tool-%F0%9F%95%B9-blueviolet)](https://tonyjurg.github.io/parasha-gematria-browser/)  [![Code license: MIT](https://img.shields.io/badge/Code_license-MIT-blue)](LICENSE) [![Ask DeepWiki](https://img.shields.io/badge/Ask-DeepWiki-blue)](https://deepwiki.com/tonyjurg/parasha-gematria-browser)
 
-
-
 A static, interactive reader for exploring gematria in the 54 individual Torah portions. Choose a parasha, numerical method, text representation and reading. Click a Hebrew word to find every matching verse, sentence, clause or phrase **within that parasha**. Or find passages containing at least two words with the same value.
 
-## Try the browser locally
+## Accessing the browser
 
-The generated dataset is included: **54 compact JSON files** in `site/data`, plus a JavaScript catalogue. Shared strings, forms and numerical arrays are stored once per portion and expanded by the browser when loaded. The JSON totals 15.4 MB, a 71.9% reduction from the readable export with glosses. No Python or Text-Fabric runs in the browser, and there are no external JavaScript dependencies, tracking scripts or fonts.
+You can either access the browser [online](https://tonyjurg.github.io/parasha-gematria-browser/) or run it on a local webserver (see next section). 
+
+## Running the browser locally
+
+The generated dataset is included: **54 compact JSON files** in `site/data`, plus a JavaScript catalogue. Shared strings, forms and numerical arrays are stored once per portion and expanded by the browser when loaded. The JSON totals 15.4 MB, a 71.9% reduction from the readable export with glosses. No Python or Text-Fabric (TF) runs in the browser, and there are no external JavaScript dependencies, tracking scripts or fonts.
 
 From this repository, run:
 
@@ -17,6 +19,8 @@ python -m http.server 8767 --bind 127.0.0.1 --directory site
 ```
 
 Open **http://127.0.0.1:8767/**. Use an HTTP server; opening `index.html` directly as a file prevents browser data loading.
+
+## Using the browser
 
 Choose **Browser guide** in the header, or open `info.html` on the same site, for a step-by-step guide to the settings, displays, searches and methods.
 
@@ -32,7 +36,9 @@ Choose **Browser guide** in the header, or open `info.html` on the same site, fo
 
 ## Generate the data with the notebook
 
-Open [create_parasha_json.ipynb](create_parasha_json.ipynb). Its linked contents and return links cover setup, source verification, inspection (including glosses), compact export, and validation. Running every code cell exports all 54 portions using schema 2. Its Python helper is a local script, not an installable package.
+You can also recreate the full dataset using the following instructions. First open [create_parasha_json.ipynb](create_parasha_json.ipynb). 
+Its linked contents and return links cover setup, source verification, inspection (including glosses), compact export, and validation. 
+Running every code cell exports all 54 portions using schema 2. Please note that its Python helper is a local script, **not an installable package**.
 
 ```console
 python -m venv .venv
@@ -41,40 +47,38 @@ python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.t
 python export_parashot.py
 ```
 
-These commands use Windows PowerShell. On Linux/macOS, activate with `source .venv/bin/activate` instead. Jupyter can be installed separately with `python -m pip install jupyterlab`.
+These commands use Windows PowerShell. On Linux/macOS, activate with `source .venv/bin/activate` instead. 
+Jupyter can be installed separately with `python -m pip install jupyterlab`.
 
-BHSA TF files are downloaded freshly on every run from the pinned revision of
-[ETCBC/bhsa](https://github.com/ETCBC/bhsa). Every downloaded file is verified
-against `source-lock.json` before Text-Fabric loads it. Temporary downloaded
-files and their Text-Fabric compiled data are removed when the loaded API is
-released or the process exits; no existing
-BHSA cache is used. An internet connection is required for regeneration.
+BHSA TF files are downloaded freshly on every run from the pinned revision of [ETCBC/bhsa](https://github.com/ETCBC/bhsa). Every downloaded file is verified
+against `source-lock.json` before Text-Fabric loads it. Temporary downloaded files and their Text-Fabric compiled data are removed when the loaded API is
+released or the process exits; no existing BHSA cache is used. An internet connection is required for regeneration.
 
 The other source locations are sibling repositories:
 
 | Source | Location |
 |---|---|
-| BHSA 2021 | Fresh download from the pinned ETCBC/bhsa commit |
-| Generated gematria_TF 0.2.0 | `../gematria_TF/tf/2021` |
-| BHSaddons | `../BHSaddons/tf/2021` |
+| BHSA 2021 | Fresh download from the pinned [ETCBC/bhsa](https://github.com/ETCBC/bhsa) commit |
+| Generated gematria_TF 0.2.0 | [`github.com/tonyjurg/gematria_TF/tf/2021`](https://github.com/tonyjurg/gematria_TF/tf/2021) |
+| BHSaddons | [`https://github.com/tonyjurg/BHSaddons/tf/2021`](https://github.com/tonyjurg/BHSaddons/tf/2021) |
 
-Override the local repositories with `--gematria` and `--addons`. A local `--bhsa` override is not supported. The exact revisions and canonical LF checksums are pinned in [source-lock.json](source-lock.json). Files that differ are rejected. The source gematria repository is private; an authorized checkout is required for regeneration. The already exported static site does not require access to that repository.
+Override the local repositories with `--gematria` and `--addons`. A local `--bhsa` override is not supported. The exact revisions and canonical LF checksums are pinned in [source-lock.json](source-lock.json). Files that differ (i.e. mismatch the checksum) are rejected.
 
-The exporter reads the numerical TF features, rather than reimplementing the five numerical methods. It uses BHSaddons `parashanum`, `parashatrans` and `parashahebr` for portion boundaries and names. It validates that all Torah word units occur exactly once across 54 portions. BHSaddons `parashaverse` is preserved when available; missing or inconsistent source verse counters are audited in `site/data/catalogue.js`, and navigation follows the BHSA verse order.
+The exporter reads the numerical TF features from `gematria_TF`, rather than reimplementing the five numerical methods. It uses BHSaddons `parashanum`, `parashatrans` and `parashahebr` TF features for portion boundaries and names. It validates that all Torah word units occur exactly once across 54 portions. BHSaddons `parashaverse` is preserved when available; missing or inconsistent source verse counters are audited in `site/data/catalogue.js`, and navigation follows the BHSA verse order.
 
 ## Interpretation and boundaries
 
 The five methods are Mispar Hechrechi, Gadol, Sidduri, Katan, and Katan Mispari. The included gematria files use the identity transformation. Vowels/cantillation are shown but do not count. See the [gematria_TF method documentation](https://github.com/tonyjurg/gematria_TF/blob/main/docs/methods.md) for precise conventions.
 
-Sentences, clauses and phrases use BHSA structural nodes and explicit word membership, including discontinuous units. They are not inferred from punctuation or verse boundaries. If a unit crosses a parasha boundary, only its words within that parasha are exported; the result is marked as clipped. When calculating whole words, only complete word groups inside the chosen unit count as matches. Partial groups remain visible as context. This avoids attributing a whole-word value to a phrase containing only its prefix.
+Sentences, clauses and phrases use BHSA structural nodes and explicit word membership, including discontinuous units. They are **not** inferred from punctuation or verse boundaries. If a unit crosses a parasha boundary, only its words within that parasha are exported; the result is marked as clipped. When calculating whole words, only complete word groups inside the chosen unit count as matches. Partial groups remain visible as context. This avoids attributing a whole-word value to a phrase containing only its prefix.
 
-Whole-form boundaries come from gematria_TF, which stops at nonempty trailers (including maqaf) and verse boundaries. Stored full-form values repeat across constituent BHSA slots; the browser deduplicates these before matching. Empty readings and unavailable values do not count as words. `None`/JSON `null` never becomes zero. All searches concern the selected parasha; the 54 individual portions are not a reading-calendar scheduler.
+Whole-form boundaries come from gematria_TF, which stops at nonempty trailers (including maqaf) and verse boundaries. Stored full-form values repeat across constituent BHSA slots; the browser deduplicates these before matching. Empty readings and unavailable values do not count as words. `None`/JSON `null` never becomes zero. All searches concern the selected parasha.
 
 ## Data format and provenance
 
 [docs/data-format.md](docs/data-format.md) describes the JSON schema. `site/data/01.json` through `54.json` are the only parasha JSON files. The ES-module `catalogue.js` lists names, ranges, counts and per-file checksums, plus source revisions and licenses. This is deliberately a JavaScript index so that the static dataset consists of exactly 54 JSON files.
 
-Schema 1 is the readable in-memory model, not the current storage format. The exporter builds schema 1, compacts it to schema 2 for storage, and checks that expansion restores the original schema-1 document. Expanding an already-readable document returns it unchanged.
+Schema 1 is the readable in-memory model, not the current storage format. During production, the exporter builds first schema 1, compacts it to schema 2 for storage, and checks that expansion restores the original schema-1 document. Expanding an already-readable document returns it unchanged.
 
 ## Validation
 
@@ -83,13 +87,13 @@ python -m pytest -q
 node --test tests/*.test.js
 ```
 
-The entire Python suite is source-independent: it uses the committed JSON files, synthetic TF APIs and mocked downloads, with no private repositories or network access required. It verifies the exact set of 54 schema-2 files against the catalogue's SHA-256 values, complete coverage, boundaries, expansion idempotence and lossless round trips. Malformed-record and compaction-guard tests also run in `python -O` subprocesses to ensure optimization cannot disable validation. Rejected compaction leaves the input files unchanged. Only real data regeneration requires the source repositories.
+The entire Python suite is source-independent: it uses the committed JSON files, synthetic TF API functions and mocked downloads, with no private repositories or network access required. It verifies the exact set of 54 schema-2 files against the catalogue's SHA-256 values, complete coverage, boundaries, expansion idempotence and lossless round trips. Malformed-record and compaction-guard tests also run in `python -O` subprocesses to ensure optimization cannot disable validation. Rejected compaction leaves the input files unchanged. Only real data regeneration requires the source repositories.
 
 JavaScript tests the exact search logic used by the browser: known Genesis 1:1 totals, all five methods, word-part versus whole-word grouping, all four structural levels, repeated spellings, split phrases and missing readings.
 
 ## Code quality
 
-[`.github/workflows/quality.yml`](.github/workflows/quality.yml) runs on pull requests to `main`, can be run manually, and is called by Pages on pushes to `main`. This runs the full matrix once per push. It checks JavaScript with ESLint, checks Python and the notebook with Ruff, runs the browser tests, and runs the Python tests on Linux Python 3.11/3.13 and Windows Python 3.13. Python dependencies are installed from the hashed lock with `--require-hashes --only-binary=:all:`. The checks validate the committed compact datasets without regenerating them or accessing private source repositories. The workflow has read-only repository permissions and no deployment access.
+[`.github/workflows/quality.yml`](.github/workflows/quality.yml) runs on pull requests to `main`, can be run manually, and is called by Pages on pushes to `main`. This runs the full matrix once per push. It checks JavaScript with ESLint, checks Python and the notebook with Ruff, runs the browser tests, and runs the Python tests on Linux Python 3.11/3.13 and Windows Python 3.13. Python dependencies are installed from the hashed lock with `--require-hashes --only-binary=:all:`. The checks validate the committed compact datasets without regenerating them or accessing private source repositories. For safety, the workflow has read-only repository permissions and no deployment access.
 
 To run the lint checks locally, use Node.js 24 or later and install the Python development requirements:
 
@@ -104,7 +108,7 @@ Lint rules focus on errors, unused code, and likely bugs; they do not impose a r
 
 ## Security and dependency maintenance
 
-See [SECURITY.md](SECURITY.md) for supported versions, confidential reporting, and security boundaries. Both HTML pages use a same-origin CSP. Rendering uses text nodes rather than HTML injection, numerical searches accept only decimal nonnegative safe integers, and external SHEBANQ links use `noopener noreferrer`. ESLint rejects common HTML injection and dynamic code-execution APIs. These controls are defense in depth, not a guarantee against all vulnerabilities; meta CSP does not support `frame-ancestors`.
+See [SECURITY.md](SECURITY.md) for supported versions, confidential reporting, and security boundaries. Both end-user facing HTML pages use a same-origin CSP. Rendering uses text nodes rather than HTML injection, numerical searches accept only decimal nonnegative safe integers, and external SHEBANQ links use `noopener noreferrer`. ESLint rejects common HTML injection and dynamic code-execution APIs. These controls are defense in depth, not a guarantee against all vulnerabilities; meta CSP does not support `frame-ancestors`.
 
 [`.github/dependabot.yml`](.github/dependabot.yml) checks SHA-pinned GitHub Actions, npm dependencies, and Python requirements with the native `uv` updater every Monday at 09:00 Europe/Amsterdam. Action updates are grouped; npm and Python minor/patch updates are grouped per ecosystem, with major updates proposed separately. npm and Python security fixes have their own groups. Each ecosystem is limited to five open version-update PRs. Dependabot alerts and security updates are enabled in the repository settings. Update PRs run the same Code Quality checks and are reviewed before merging.
 
@@ -159,4 +163,4 @@ This project was created with assistance from OpenAI Codex. The human maintainer
 - Eep Talstra Centre for Bible and Computer, [BHSA](https://etcbc.github.io/bhsa/), [DOI 10.17026/dans-z6y-skyh](https://doi.org/10.17026/dans-z6y-skyh): Hebrew text and linguistic structure, CC BY-NC 4.0.
 - [Text-Fabric](https://annotation.github.io/text-fabric/tf/): source loading and structural access.
 
-New browser/exporter code: [MIT](LICENSE). Exported text and data: [CC BY-NC 4.0](LICENSE-DATA.md). Documentation and notebook: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The connected-text logo is reused from my gematria_TF project.
+New browser/exporter code: [MIT](LICENSE). Exported text and data: [CC BY-NC 4.0](LICENSE-DATA.md). Documentation and notebook: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The connected-text logo is based upon the logo used in my [gematria_TF](https://github.com/tonyjurg/gematria_TF) project.
